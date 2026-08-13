@@ -1,19 +1,47 @@
 {
-  "name": "source",
+  "name": "@trkbt10/r3",
   "version": "0.1.0",
   "type": "module",
-  "main": "dist/index.cjs",
+  "description": "A retained-mode, Phaser-style display-list UI framework built on three.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
+    },
+    "./layout-engine": {
+      "types": "./dist/layout-engine/index.d.ts",
+      "import": "./dist/layout-engine/index.js",
+      "default": "./dist/layout-engine/index.js"
+    },
+    "./layout-engine/editor": {
+      "types": "./dist/layout-engine/editor/index.d.ts",
+      "import": "./dist/layout-engine/editor/index.js",
+      "default": "./dist/layout-engine/editor/index.js"
+    },
+    "./widgets/panel-effects": {
+      "types": "./dist/widgets/panel-effects/index.d.ts",
+      "import": "./dist/widgets/panel-effects/index.js",
+      "default": "./dist/widgets/panel-effects/index.js"
+    },
+    "./spotlight": {
+      "types": "./dist/spotlight/index.d.ts",
+      "import": "./dist/spotlight/index.js",
+      "default": "./dist/spotlight/index.js"
+    },
+    "./texture-canvas": {
+      "types": "./dist/texture-canvas/index.d.ts",
+      "import": "./dist/texture-canvas/index.js",
+      "default": "./dist/texture-canvas/index.js"
     }
   },
   "packageManager": "bun@1.3.11",
   "sideEffects": false,
+  "peerDependencies": {
+    "three": "^0.184.0"
+  },
   "scripts": {
     "build": "vite build",
     "clean": "rimraf dist",
@@ -26,8 +54,9 @@
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.1",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.5.0",
-    "@types/react": "^19.2.14",
+    "@types/three": "^0.184.0",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
     "@vitest/coverage-v8": "^4.1.0",
@@ -36,8 +65,10 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^62.8.0",
+    "happy-dom": "^20.9.0",
     "prettier": "^3.8.1",
     "rimraf": "^6.1.3",
+    "three": "^0.184.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1",
     "vite": "^8.0.0",

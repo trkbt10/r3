@@ -10,15 +10,13 @@ export default {
     { selector: "TSInterfaceDeclaration", message: "Please use type instead of interface" },
     { selector: "ExportAllDeclaration[exported!=null]", message: "export * as is prohibited" },
     { selector: "ExportAllDeclaration[exportKind='type']", message: "export type * from is prohibited" },
-    {
-      selector:
-        "ClassDeclaration" +
-        ":not(:has(TSClassImplements[expression.name='Error']))" +
-        ":not([superClass.name='Error'])" +
-        ":not([superClass.property.name='Error'])" +
-        ":not([superClass.object.name='globalThis'][superClass.property.name='Error'])",
-      message: "Class implementation is not recommended. Please write as function-based as much as possible.",
-    },
+    // Class declarations are allowed in this package: r3 is a
+    // retained-mode scene graph whose consumer contract is
+    // subclassing (Scene, Node) — see src/Scene.ts / src/Node.ts.
+    // Forcing that contract into function-based code would fight
+    // the framework's own public API, so the class-ban selector
+    // that other packages in this workspace apply is not present
+    // here.
     {
       selector:
         "VariableDeclaration[kind='let']" +
