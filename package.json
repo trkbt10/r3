@@ -52,6 +52,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "prepare": "bun run build",
     "clean": "rimraf dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
