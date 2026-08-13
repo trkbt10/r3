@@ -244,3 +244,50 @@ them. Most specs run under Vitest's default `"node"` environment;
 specs that touch canvas / `HTMLImageElement` / pointer DOM events opt
 into a DOM per-file via a `@vitest-environment happy-dom` pragma
 comment.
+
+## Development
+
+A `Makefile` at the repository root maps each delegation target onto
+this package's `bun` toolchain:
+
+| Target      | Runs                                                                    |
+| ----------- | ------------------------------------------------------------------------ |
+| `install`   | `bun install`                                                            |
+| `typecheck` | `tsc -p tsconfig.json --noEmit` (`src/` + `spec/` only)                  |
+| `lint`      | `eslint .` (repo-wide, including `scripts/` and `fixture/`)              |
+| `test`      | `vitest --run`                                                           |
+| `build`     | `vite build`, then `scripts/verify-consumer.ts` against the built `dist/` output |
+| `dev`       | Builds the library, then starts the `fixture/` demo's Vite dev server    |
+| `fixture`   | Rebuilds the library and vite-builds `fixture/` as a static site into `DIR` |
+
+`make build` does not stop at the bundler: it chains
+`bun run verify:consumer`, a plain Node script
+(`scripts/verify-consumer.ts`) that imports the built `dist/` output
+through every subpath declared in this package's `exports` map and
+exercises real behaviour — Stage/Scene/TweenManager/layout-engine/
+ScrollModel/theme/`wrapText` — the way an external consumer would,
+never importing `src/` directly.
+
+### Fixture demo
+
+`fixture/` is a small Vite app that imports `@trkbt10/r3` and its
+subpaths through an alias table pointed at `../dist` (again, never
+`src/`), so it renders exactly what a real consumer would get. Run
+`make dev` to build the library and open the demo's Vite dev server,
+or `make fixture DIR=<path>` to produce a static build of it at
+`<path>` (defaults to `/tmp/r3-fixture`; rebuilt from scratch on
+every run).
+
+The demo picks one of four deterministic states via the `?state=`
+URL query parameter:
+
+| `?state=`   | Renders                                                                  |
+| ----------- | --------------------------------------------------------------------------- |
+| `showcase`  | (default) Heading-style button with a click counter, a Panel, a TextInput, and a ScrollablePanel, laid out via the `layout-engine` subpath |
+| `empty`     | A bare Stage with nothing mounted                                       |
+| `dialog`    | The showcase scene plus an `openR3Dialog` modal already open            |
+| `spotlight` | The showcase scene plus a `spotlight` subpath overlay anchored on the button |
+
+`window.__R3__` (see `installR3Inspector`) is installed
+unconditionally so external automation can inspect and drive the
+running scene.

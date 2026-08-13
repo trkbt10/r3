@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "ESNext",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["vite/client"],
+    "paths": {
+      "@trkbt10/r3/layout-engine/editor": ["../dist/layout-engine/editor/index.d.ts"],
+      "@trkbt10/r3/layout-engine": ["../dist/layout-engine/index.d.ts"],
+      "@trkbt10/r3/widgets/panel-effects": ["../dist/widgets/panel-effects/index.d.ts"],
+      "@trkbt10/r3/spotlight": ["../dist/spotlight/index.d.ts"],
+      "@trkbt10/r3/texture-canvas": ["../dist/texture-canvas/index.d.ts"],
+      "@trkbt10/r3": ["../dist/index.d.ts"]
+    }
+  },
+  "include": ["./**/*"]
+}

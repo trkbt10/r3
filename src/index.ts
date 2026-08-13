@@ -189,6 +189,8 @@ export type {
   R3PanelOptions,
   R3HudPanelGeometry,
 } from "./widgets/Panel.ts";
+export { createR3TextInput, isR3TextInputElement } from "./widgets/TextInput.ts";
+export type { R3TextInputOptions, R3TextInputHandle } from "./widgets/TextInput.ts";
 
 export {
   SPOTLIGHT_OVERLAY_DEPTH,
