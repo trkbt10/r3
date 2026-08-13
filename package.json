@@ -1,8 +1,16 @@
 {
   "name": "@trkbt10/r3",
   "version": "0.1.0",
-  "type": "module",
   "description": "A retained-mode, Phaser-style display-list UI framework built on three.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trkbt10/r3.git"
+  },
+  "homepage": "https://github.com/trkbt10/r3#readme",
+  "bugs": {
+    "url": "https://github.com/trkbt10/r3/issues"
+  },
+  "type": "module",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
