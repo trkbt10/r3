@@ -230,11 +230,54 @@ consumer that only needs one doesn't pull in the rest of the package:
 ## Widgets
 
 `Button`, `OrnateButton`, `Heading`, `Dialog`, `ScrollablePanel`,
-`TabBar`, `Select`, `TextInput`, `LayoutCursor`, `Panel` (including
-the HUD-plaque preset) are exported from the root barrel. They only
-depend on r3's core primitives and the default theme, so they render
-consistently regardless of the host application's own visual
-language — override tokens via `configureR3Theme` to restyle them.
+`TabBar`, `Select`, `Plaque`, `TextInput`, `LayoutCursor`, `Panel`
+(including the HUD-plaque preset) are exported from the root barrel.
+They only depend on r3's core primitives and the default theme, so
+they render consistently regardless of the host application's own
+visual language — override tokens via `configureR3Theme` to restyle
+them.
+
+| Widget           | Factory / export                                                                 | Notes                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Button            | `createR3Button`                                                                  | Primary/secondary variants, optional click SFX.                      |
+| OrnateButton       | `createR3OrnateButton`                                                            | Decorated button variant for title/menu-style chrome.                |
+| Heading            | `createR3Heading`                                                                 | Styled section heading text.                                         |
+| Dialog             | `openR3Dialog`                                                                    | Modal overlay with backdrop, sized content area, close animation.    |
+| ScrollablePanel    | `R3ScrollablePanel` (class), backed by `ScrollModel`                             | Drag/wheel-scrollable clipped viewport.                               |
+| TabBar             | `createR3TabBar`                                                                  | Folder-tab-style horizontal tab strip.                                |
+| Select             | `createR3Select`                                                                  | Compact single-choice dropdown; popup renders above later siblings via an overlay render layer. |
+| Plaque             | `createR3Plaque`, `createR3PlaqueButton`                                         | Gold-framed HUD chrome (via `createR3ResizableHudPanel`) plus a pluggable `effects` list from `@trkbt10/r3/widgets/panel-effects`; `createR3PlaqueButton` adds a `pointerdown` → `onActivate` wrapper. |
+| TextInput          | `createR3TextInput`, `isR3TextInputElement`                                       | Backed by a hidden native `<input>` for IME-correct text entry.       |
+| LayoutCursor       | `R3LayoutCursor` (class)                                                          | Keyboard/gamepad focus-cursor helper for layout-engine grids.         |
+| Panel              | `createR3Panel`, `createR3HudPanel`, `createR3ResizableHudPanel`                  | Shared rounded-rect chrome; the HUD variants add the gold-framed double-border plaque look, resizable or fixed. |
+
+## Pointer input
+
+A `Stage` never listens to the DOM on its own — it exposes
+`stage.pointer` (a `PointerManager`) that expects `feedDown` /
+`feedMove` / `feedUp` / `feedWheel` / `feedPinch` / `feedCancel` calls
+in stage-logical pixel coordinates. `attachCanvasPointerBridge` is the
+root-barrel helper that does that translation for a real
+`HTMLCanvasElement`: it maps the canvas's `getBoundingClientRect()`
+against `stage.screen` and forwards mouse, touch (including
+multi-touch pinch), and wheel events, staying correct across resizes
+because every event re-reads the current mapping rather than caching
+fixed width/height arguments.
+
+```ts
+import { Stage, attachCanvasPointerBridge } from "@trkbt10/r3";
+
+const canvas = document.querySelector("canvas")!;
+const stage = new Stage({ /* … */ });
+
+const bridge = attachCanvasPointerBridge({ canvas, stage });
+// Later, on teardown (route change, component unmount, hot reload):
+bridge.dispose();
+```
+
+Without this call (or an equivalent hand-rolled forwarder feeding
+`stage.pointer` directly), widgets render but never receive clicks —
+`stage.pointer` has nothing feeding it events.
 
 ## Testing
 
@@ -283,7 +326,7 @@ URL query parameter:
 
 | `?state=`   | Renders                                                                  |
 | ----------- | --------------------------------------------------------------------------- |
-| `showcase`  | (default) Heading-style button with a click counter, a Panel, a TextInput, and a ScrollablePanel, laid out via the `layout-engine` subpath |
+| `showcase`  | (default) Heading-style button with a click counter, a Panel, a TextInput, a Select, a Plaque, and a ScrollablePanel, laid out via the `layout-engine` subpath, wired to pointer input via `attachCanvasPointerBridge` |
 | `empty`     | A bare Stage with nothing mounted                                       |
 | `dialog`    | The showcase scene plus an `openR3Dialog` modal already open            |
 | `spotlight` | The showcase scene plus a `spotlight` subpath overlay anchored on the button |

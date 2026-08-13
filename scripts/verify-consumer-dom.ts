@@ -1,16 +1,22 @@
 /**
  * @file DOM-shim installer for scripts/verify-consumer.ts.
  *
- * Plain Node has no `window`/`document`. Two r3 widgets read those
- * globals directly (`src/widgets/Dialog.ts`'s `window.setTimeout`,
- * `src/widgets/TextInput.ts`'s hidden native `<input>`) — see
- * verify-consumer.ts's file header for the full rationale. This
- * module's only job is to install happy-dom's real `Window`
- * implementation as those globals as an import-time side effect, so
- * that importing this module before importing `@trkbt10/r3` is
- * sufficient to make every r3 code path that reads `window` or
- * `document` see a real (if canvas-2D-less) DOM instead of throwing
- * `ReferenceError`.
+ * Plain Node has no `window`/`document`. Several r3 modules read
+ * those globals (or DOM constructors reachable only through them)
+ * directly — `src/widgets/Dialog.ts`'s `window.setTimeout`,
+ * `src/widgets/TextInput.ts`'s hidden native `<input>`,
+ * `src/image-loading/index.ts`'s default provider (consumed by
+ * `src/widgets/Panel.ts`'s HUD wood-grain overlay, and therefore by
+ * `Plaque`) constructing a bare `new Image()`, and
+ * `src/canvasPointerBridge.ts`'s consumer-side exercise in
+ * verify-consumer.ts dispatching real `new MouseEvent(...)` instances
+ * at a canvas element — see verify-consumer.ts's file header for the
+ * full rationale. This module's only job is to install happy-dom's
+ * real `Window` implementation as those globals as an import-time
+ * side effect, so that importing this module before importing
+ * `@trkbt10/r3` is sufficient to make every r3 code path that reads
+ * `window`, `document`, `Image`, or `MouseEvent` see a real (if
+ * canvas-2D-less) DOM instead of throwing `ReferenceError`.
  *
  * `happy-dom` is a `devDependency` of this package already (see
  * package.json) — this does not add a new dependency, and it is the
@@ -55,3 +61,5 @@ installGlobal("OffscreenCanvas", happyDomWindow.OffscreenCanvas);
 installGlobal("HTMLInputElement", happyDomWindow.HTMLInputElement);
 installGlobal("HTMLCanvasElement", happyDomWindow.HTMLCanvasElement);
 installGlobal("Element", happyDomWindow.Element);
+installGlobal("Image", happyDomWindow.Image);
+installGlobal("MouseEvent", happyDomWindow.MouseEvent);

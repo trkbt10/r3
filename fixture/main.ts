@@ -9,8 +9,8 @@
  *
  *   - `showcase` (default) — heading, a clickable Button whose click
  *     count renders back into the scene, a Panel, a TextInput, a
- *     ScrollablePanel with several rows, all placed via the
- *     layout-engine subpath.
+ *     Select dropdown, a Plaque, and a ScrollablePanel with several
+ *     rows, all placed via the layout-engine subpath.
  *   - `empty` — a bare Stage with nothing mounted (the zero state).
  *   - `dialog` — the showcase scene plus an `openR3Dialog` modal
  *     already open on load.
@@ -30,9 +30,12 @@ import {
   SceneManager,
   Scene,
   Container,
+  attachCanvasPointerBridge,
   configureR3Theme,
   createR3Button,
   createR3Panel,
+  createR3Plaque,
+  createR3Select,
   createR3TextInput,
   makeScreen,
   installR3Inspector,
@@ -72,49 +75,10 @@ function mountCanvas(): HTMLCanvasElement {
 }
 
 /**
- * Minimal mouse-only forwarder from the DOM canvas to `stage.pointer`.
- * The library's own richer bridge (touch, pinch, wheel) is an
- * internal module not published on the package's public surface;
- * this fixture only needs single-pointer mouse click/drag, so it
- * maps just that subset directly against `stage.screen` rather than
- * depending on that internal module.
- */
-function attachMousePointerForwarding(canvas: HTMLCanvasElement, stage: Stage): void {
-  function toLogical(event: MouseEvent): { readonly x: number; readonly y: number } {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: ((event.clientX - rect.left) / rect.width) * stage.screen.width,
-      y: ((event.clientY - rect.top) / rect.height) * stage.screen.height,
-    };
-  }
-  canvas.addEventListener("mousemove", (event) => {
-    const p = toLogical(event);
-    stage.pointer.feedMove(p.x, p.y);
-  });
-  canvas.addEventListener("mousedown", (event) => {
-    const p = toLogical(event);
-    stage.pointer.feedDown(p.x, p.y, event.button);
-  });
-  canvas.addEventListener("mouseup", (event) => {
-    const p = toLogical(event);
-    stage.pointer.feedUp(p.x, p.y, event.button);
-  });
-  canvas.addEventListener(
-    "wheel",
-    (event) => {
-      const p = toLogical(event);
-      stage.pointer.feedWheel(p.x, p.y, event.deltaY);
-      event.preventDefault();
-    },
-    { passive: false },
-  );
-}
-
-/**
  * Builds the showcase content (heading, button, panel, text input,
- * scrollable panel) under `parent`, laid out via the layout-engine
- * subpath. Returns the button handle so callers (the `dialog` /
- * `spotlight` states) can anchor further UI against it.
+ * select, plaque, scrollable panel) under `parent`, laid out via the
+ * layout-engine subpath. Returns the button handle so callers (the
+ * `dialog` / `spotlight` states) can anchor further UI against it.
  */
 function buildShowcaseContent(stage: Stage, parent: Container): { readonly button: R3ButtonHandle } {
   const clickState = { count: 0 };
@@ -183,6 +147,27 @@ function buildShowcaseContent(stage: Stage, parent: Container): { readonly butto
     scrollPanel.content.add(row);
   }
 
+  const select = createR3Select({
+    stage,
+    parent,
+    textureManager: defaultTextureManager,
+    value: "all",
+    options: [
+      { value: "all", label: "All" },
+      { value: "seen", label: "Seen" },
+      { value: "unseen", label: "Unseen" },
+    ],
+    onChange: () => undefined,
+  });
+
+  const plaque = createR3Plaque({
+    host: parent,
+    textureManager: defaultTextureManager,
+    width: 320,
+    height: 100,
+    shadow: true,
+  });
+
   const root = flexBox({
     key: "root",
     direction: "column",
@@ -208,6 +193,26 @@ function buildShowcaseContent(stage: Stage, parent: Container): { readonly butto
         children: [
           leaf({ key: "text-input", width: 320, height: 44, onRect: bindPosition(textInput.node) }),
           leaf({ key: "scroll-panel", width: 320, height: 200, onRect: bindPosition(scrollPanel.container) }),
+        ],
+      }),
+      flexBox({
+        key: "widgets-row",
+        direction: "row",
+        gap: 24,
+        height: 100,
+        children: [
+          leaf({
+            key: "select",
+            width: 140,
+            height: 34,
+            onRect: (rect) => select.setRect(rect),
+          }),
+          leaf({
+            key: "plaque",
+            width: 320,
+            height: 100,
+            onRect: (rect) => plaque.setRect(rect.x, rect.y, rect.width, rect.height),
+          }),
         ],
       }),
     ],
@@ -315,7 +320,7 @@ function main(): void {
     textureManager: defaultTextureManager,
   });
 
-  attachMousePointerForwarding(canvas, stage);
+  attachCanvasPointerBridge({ canvas, stage });
 
   const scenes = new SceneManager(stage);
   scenes.register({ key: "showcase", factory: (s, k) => new ShowcaseScene(s, k) });

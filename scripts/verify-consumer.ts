@@ -97,7 +97,12 @@ import "./verify-consumer-dom.ts";
 
 import {
   Container,
+  attachCanvasPointerBridge,
   createR3Button,
+  createR3Plaque,
+  createR3PlaqueButton,
+  createR3ResizableHudPanel,
+  createR3Select,
   Node as R3Node,
   R3ScrollablePanel,
   Scene,
@@ -146,6 +151,11 @@ function checkRootAndSubpathSymbols(): void {
   assert.equal(typeof R3Node, "function", "Node should be a class (function)");
   assert.equal(typeof TweenManager, "function", "TweenManager should be a class (function)");
   assert.equal(typeof createR3Button, "function", "createR3Button should be a function");
+  assert.equal(typeof createR3Select, "function", "createR3Select should be a function");
+  assert.equal(typeof createR3Plaque, "function", "createR3Plaque should be a function");
+  assert.equal(typeof createR3PlaqueButton, "function", "createR3PlaqueButton should be a function");
+  assert.equal(typeof createR3ResizableHudPanel, "function", "createR3ResizableHudPanel should be a function");
+  assert.equal(typeof attachCanvasPointerBridge, "function", "attachCanvasPointerBridge should be a function");
   assert.equal(typeof makeScreen, "function", "makeScreen should be a function");
   assert.equal(typeof wrapText, "function", "wrapText should be a function");
   assert.equal(typeof configureR3Theme, "function", "configureR3Theme should be a function");
@@ -196,6 +206,137 @@ function checkStageAndButtonClick(): void {
   stage.pointer.feedDown(1000, 700, 0);
   stage.pointer.feedUp(1000, 700, 0);
   assert.equal(clicks.length, 1, "clicking outside the button's hit rect must not fire onClick");
+}
+
+/**
+ * createR3Select: clicking the closed control opens its popup, and
+ * clicking an option fires onChange with that option's value and
+ * closes the popup again. Exercises the same pointer-driven open/
+ * select/close cycle Select.spec.ts covers, but through the built
+ * dist/ output's root export rather than importing src/ directly.
+ */
+function checkSelectOpensAndChoosesOption(): void {
+  const stage = buildStage();
+  const changes: string[] = [];
+  const select = createR3Select({
+    stage,
+    parent: stage.root,
+    textureManager: defaultTextureManager,
+    value: "all",
+    options: [
+      { value: "all", label: "All" },
+      { value: "seen", label: "Seen" },
+    ],
+    onChange: (value) => changes.push(value),
+  });
+  select.setRect({ x: 20, y: 20, width: 140, height: 34 });
+  stage.tick(0);
+
+  // Clicking the closed control's centre (x=90, y=37) opens the popup.
+  stage.pointer.feedDown(90, 37);
+  stage.pointer.feedUp(90, 37);
+  stage.tick(0);
+  assert.equal(select.value, "all", "opening the popup must not change the current value");
+
+  // Select.ts's `open()` stacks one row per option starting at
+  // `rect.y + rect.height + 4` (the 4px gap before the popup plate),
+  // each `rect.height` tall: row index 0 ("all") occupies
+  // y in [58, 92), row index 1 ("seen") occupies y in [92, 126).
+  // Click the middle of the "seen" row.
+  const seenRowTop = 20 + 34 + 4 + 34 * 1;
+  stage.pointer.feedDown(90, seenRowTop + 17);
+  stage.pointer.feedUp(90, seenRowTop + 17);
+
+  assert.deepEqual(changes, ["seen"], "clicking the second option should fire onChange('seen') exactly once");
+  assert.equal(select.value, "seen", "select.value should reflect the chosen option after onChange fires");
+
+  select.destroy();
+}
+
+/**
+ * createR3ResizableHudPanel + createR3Plaque + createR3PlaqueButton:
+ * builds a plaque button with a drop-shadow effect, resizes it, fires
+ * its onActivate handler via pointerdown, and tears it all down.
+ * Exercises the chrome (Panel.ts), the effect-mounting framework
+ * (Plaque.ts), and the interactive wrapper in one pass.
+ */
+function checkPlaqueButtonResizeAndActivate(): void {
+  const stage = buildStage();
+
+  const standalonePanel = createR3ResizableHudPanel({
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
+    textureManager: defaultTextureManager,
+  });
+  assert.equal(standalonePanel.radius, 12, "createR3ResizableHudPanel should default radius to 12");
+  standalonePanel.setRect(10, 10, 240, 120);
+  standalonePanel.destroy();
+
+  const activations: number[] = [];
+  const plaqueButton = createR3PlaqueButton({
+    host: stage.root,
+    textureManager: defaultTextureManager,
+    x: 0,
+    y: 0,
+    width: 220,
+    height: 90,
+    shadow: true,
+    onActivate: () => activations.push(1),
+  });
+  stage.add(plaqueButton.node);
+  stage.tick(0);
+
+  plaqueButton.plaque.setRect(0, 0, 260, 110);
+  plaqueButton.plaque.tick(16);
+
+  stage.pointer.feedDown(130, 55);
+  stage.pointer.feedUp(130, 55);
+  assert.deepEqual(activations, [1], "pointerdown over the plaque button should fire onActivate exactly once");
+
+  plaqueButton.destroy();
+}
+
+/**
+ * attachCanvasPointerBridge: forwards a real DOM MouseEvent dispatched
+ * on a canvas element into stage.pointer, mapped through the canvas's
+ * bounding rect and the stage's logical screen size. `document` here
+ * is happy-dom's real DOM (installed by verify-consumer-dom.ts), so
+ * `document.createElement("canvas")` and `dispatchEvent` run the
+ * bridge's actual browser-facing code path, not a stand-in for it.
+ */
+function checkCanvasPointerBridgeForwardsMouseEvents(): void {
+  const stage = buildStage();
+  const canvas = document.createElement("canvas");
+  canvas.getBoundingClientRect = () =>
+    ({
+      left: 0,
+      top: 0,
+      width: 1280,
+      height: 720,
+      right: 1280,
+      bottom: 720,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+
+  const downs: Array<{ readonly x: number; readonly y: number }> = [];
+  stage.pointer.on("pointerdown", (e) => downs.push({ x: e.x, y: e.y }));
+
+  const bridge = attachCanvasPointerBridge({ canvas, stage });
+  canvas.dispatchEvent(new MouseEvent("mousedown", { clientX: 640, clientY: 360, button: 0, bubbles: true }));
+  assert.deepEqual(
+    downs,
+    [{ x: 640, y: 360 }],
+    "a mousedown dispatched on the canvas should reach stage.pointer mapped 1:1 at this screen size",
+  );
+  canvas.dispatchEvent(new MouseEvent("mouseup", { clientX: 640, clientY: 360, button: 0, bubbles: true }));
+
+  bridge.dispose();
+  canvas.dispatchEvent(new MouseEvent("mousedown", { clientX: 640, clientY: 360, button: 0, bubbles: true }));
+  assert.deepEqual(downs, [{ x: 640, y: 360 }], "after dispose() the bridge must not forward further events");
 }
 
 /** SceneManager registers a scene, starts it, and onSceneEnter fires before the scene's own enter body runs. */
@@ -347,6 +488,15 @@ function checkWrapTextKinsoku(): void {
 function main(): void {
   check("root + subpath exports resolve to the expected symbol kinds", checkRootAndSubpathSymbols);
   check("Stage + createR3Button: clicking the button's world rect fires onClick", checkStageAndButtonClick);
+  check("createR3Select: opening the popup and choosing an option fires onChange", checkSelectOpensAndChoosesOption);
+  check(
+    "createR3ResizableHudPanel + createR3Plaque + createR3PlaqueButton: resize and onActivate",
+    checkPlaqueButtonResizeAndActivate,
+  );
+  check(
+    "attachCanvasPointerBridge: forwards DOM mouse events to stage.pointer until disposed",
+    checkCanvasPointerBridgeForwardsMouseEvents,
+  );
   check("SceneManager: onSceneEnter fires on start(), before the scene's own enter", checkSceneManagerOnSceneEnter);
   check("TweenManager: advance() moves a numeric target toward its destination over time", checkTweenAdvances);
   check("layout-engine: flexBox/leaf + arrangeOneShot report the expected rects", checkLayoutEngineArrangeOneShot);

@@ -22,9 +22,16 @@
  *    {@link R3ScrollablePanel}'s drag/wheel input.
  *
  * Widgets that live here are **generic** — Button, Dialog,
- * ScrollablePanel, TabBar, LayoutCursor, Panel. Application-specific
- * surfaces (game HUD, prep pages, world view) are expected to live
- * in the consuming application and compose these primitives.
+ * ScrollablePanel, TabBar, Select, Plaque, LayoutCursor, Panel.
+ * Application-specific surfaces (game HUD, prep pages, world view)
+ * are expected to live in the consuming application and compose
+ * these primitives.
+ *
+ * {@link attachCanvasPointerBridge} is the DOM wiring layer: it
+ * forwards a canvas element's mouse/touch/wheel events into
+ * {@link Stage.pointer} using the stage's own logical screen size for
+ * coordinate mapping, so a host does not hand-roll that forwarding
+ * loop itself.
  *
  * Sub-barrels not re-exported here — `layout-engine/index.ts`,
  * `layout-engine/editor/index.ts`, `widgets/panel-effects/index.ts`,
@@ -184,13 +191,35 @@ export { createR3TabBar } from "./widgets/TabBar.ts";
 export type { R3TabBarOptions, R3TabBarHandle, R3TabSpec } from "./widgets/TabBar.ts";
 export { R3LayoutCursor } from "./widgets/LayoutCursor.ts";
 export type { R3LayoutCursorConfig } from "./widgets/LayoutCursor.ts";
-export { createR3Panel, createR3HudPanel } from "./widgets/Panel.ts";
+export { createR3Panel, createR3HudPanel, createR3ResizableHudPanel } from "./widgets/Panel.ts";
 export type {
   R3PanelOptions,
   R3HudPanelGeometry,
+  R3ResizableHudPanelHandle,
 } from "./widgets/Panel.ts";
 export { createR3TextInput, isR3TextInputElement } from "./widgets/TextInput.ts";
 export type { R3TextInputOptions, R3TextInputHandle } from "./widgets/TextInput.ts";
+export { createR3Select } from "./widgets/Select.ts";
+export type { R3SelectOption, R3SelectHandle } from "./widgets/Select.ts";
+export { createR3Plaque, createR3PlaqueButton } from "./widgets/Plaque.ts";
+export type {
+  R3PlaqueHost,
+  R3PlaqueShadow,
+  R3PlaqueOptions,
+  R3PlaqueHandle,
+  R3PlaqueButtonOptions,
+  R3PlaqueButtonHandle,
+} from "./widgets/Plaque.ts";
+
+// DOM canvas → stage.pointer forwarding — the wiring every host needs
+// to turn mouse/touch/wheel browser events into stage-logical pointer
+// input. See canvasPointerBridge.ts's file header for the coordinate-
+// mapping contract.
+export { attachCanvasPointerBridge } from "./canvasPointerBridge.ts";
+export type {
+  CanvasPointerBridgeOptions,
+  CanvasPointerBridgeHandle,
+} from "./canvasPointerBridge.ts";
 
 export {
   SPOTLIGHT_OVERLAY_DEPTH,
