@@ -22,6 +22,15 @@ its 3D content.
 npm install @trkbt10/r3 three
 ```
 
+The package is not yet published to the npm registry — until it is, install
+the prebuilt `release` branch directly from GitHub (kept in sync with `main`
+by CI, with `dist/` included and no lifecycle scripts, so it installs under
+package managers that skip a git dependency's devDependencies, such as bun):
+
+```bash
+bun add "git+https://github.com/trkbt10/r3.git#release" three
+```
+
 `three` is a **peer dependency** (`^0.184.0`), not a bundled
 dependency — install it alongside r3 so both share the same `three`
 module instance (required for `instanceof` checks on `three` classes

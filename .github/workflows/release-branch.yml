@@ -1,0 +1,43 @@
+name: Update release branch
+
+# Keeps a consumable `release` branch in sync with `main`: it contains the
+# built dist/ plus a package.json stripped of lifecycle scripts, so package
+# managers that skip a git dependency's devDependencies (bun) can install
+# `github:trkbt10/r3#release` and resolve the `exports` map without running
+# any build on the consumer's machine.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Strip lifecycle scripts and dev-only fields
+        run: |
+          jq 'del(.scripts, .devDependencies, .packageManager)' package.json > package.release.json
+          mv package.release.json package.json
+
+      - name: Publish release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan release
+          git rm -rf --cached . >/dev/null
+          git add -f package.json README.md dist
+          git commit -m "release: build of $GITHUB_SHA"
+          git push -f origin release
