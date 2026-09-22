@@ -25,6 +25,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: "src/index.ts",
+        "physics/index": "src/physics/index.ts",
         "layout-engine/index": "src/layout-engine/index.ts",
         "layout-engine/editor/index": "src/layout-engine/editor/index.ts",
         "widgets/panel-effects/index": "src/widgets/panel-effects/index.ts",

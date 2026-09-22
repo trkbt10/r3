@@ -234,6 +234,7 @@ consumer that only needs one doesn't pull in the rest of the package:
 | `@trkbt10/r3/layout-engine/editor` | Direct-manipulation layout editor overlay (`LayoutEditor`, handles).  |
 | `@trkbt10/r3/widgets/panel-effects` | Pluggable panel decorations (`dropShadow`, `outerGlow`, `lightning`, …) consumed by the `Plaque` widget. |
 | `@trkbt10/r3/spotlight`           | Tutorial-style spotlight/arrow overlay (`installSpotlightOverlay`).      |
+| `@trkbt10/r3/physics` | Dependency-free viscoelastic volume deformation (`createViscousLattice`). |
 | `@trkbt10/r3/texture-canvas`      | Canvas-backed GPU texture source management (`TextureManager`, `defaultTextureManager`). |
 
 ## Widgets
@@ -343,3 +344,34 @@ URL query parameter:
 `window.__R3__` (see `installR3Inspector`) is installed
 unconditionally so external automation can inspect and drive the
 running scene.
+
+## Viscoelastic volume deformation
+
+`@trkbt10/r3/physics` exports `createViscousLattice`, a27node spring-and-damper
+volume for interactive visual deformation. It does not import Three.js, read a
+clock, or install pointer listeners. The host translates its model's original
+bounding box to-0.5..0.5 on each axis, forwards grabs, and adds sampled
+displacement to the model's original vertices. Collision handling stays in the host.
+
+```ts
+import { createViscousLattice } from "@trkbt10/r3/physics";
+const body = createViscousLattice({
+  softness: 0.7, viscosity: 0.5, elasticity: 0.6, stickiness: 0.3,
+});
+body.grab([0, 0.5, 0]);
+body.drag([0.2, -0.1, 0]); // total displacement from the initial grab
+body.step(1 / 60); // seconds, unlike Stage.tick's milliseconds
+const displacement = [0, 0, 0];
+body.sample([0, 0.5, 0], displacement); // writes into the reusable array
+body.release(); // keep stepping to observe recovery
+```
+
+All four coefficients are normalized0..1 and copied at construction. Softness
+controls compliance, viscosity damps motion including neighboring velocities,
+elasticity strengthens restoration, and stickiness prolongs released adhesion.
+`pulse(strength)` applies a bounded radial impulse. `held` reports pointer ownership;
+`maxDisplacement` reports the largest absolute component. One `step` advances at
+most1/15second using substeps no larger than1/120second; excess elapsed time is
+dropped. Drag is capped at±0.4 and displacement at±0.45 per axis. Non-finite inputs
+become zero. These limits keep visual interactions bounded; the kernel does not
+claim measured material accuracy, volume conservation, or collision resolution.

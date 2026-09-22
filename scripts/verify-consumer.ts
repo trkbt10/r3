@@ -77,6 +77,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { createViscousLattice } from "@trkbt10/r3/physics";
 
 /**
  * Installs happy-dom's Window/Document implementation as the global
@@ -485,7 +486,18 @@ function checkWrapTextKinsoku(): void {
   assert.equal(rejoined, text, "wrapping must not drop or reorder characters");
 }
 
+function checkViscousLattice(): void {
+  const lattice = createViscousLattice({ softness: 0.7,viscosity: 0.3,elasticity: 0.6,stickiness: 0.2 });
+  lattice.grab([0,0.5,0]); lattice.drag([0.3,-0.2,0.1]);
+  for (let frame=0;frame<60;frame++) { lattice.step(1/60); }
+  assert.ok(lattice.maxDisplacement>0.06,"grab must deform the built lattice");
+  lattice.release();
+  for (let frame=0;frame<480;frame++) { lattice.step(1/60); }
+  assert.ok(lattice.maxDisplacement<0.0001,"released lattice must recover");
+}
+
 function main(): void {
+  check("physics: built public lattice deforms under grab and recovers after release",checkViscousLattice);
   check("root + subpath exports resolve to the expected symbol kinds", checkRootAndSubpathSymbols);
   check("Stage + createR3Button: clicking the button's world rect fires onClick", checkStageAndButtonClick);
   check("createR3Select: opening the popup and choosing an option fires onChange", checkSelectOpensAndChoosesOption);

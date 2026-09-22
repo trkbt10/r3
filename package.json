@@ -43,6 +43,11 @@
       "types": "./dist/texture-canvas/index.d.ts",
       "import": "./dist/texture-canvas/index.js",
       "default": "./dist/texture-canvas/index.js"
+    },
+    "./physics": {
+      "types": "./dist/physics/index.d.ts",
+      "import": "./dist/physics/index.js",
+      "default": "./dist/physics/index.js"
     }
   },
   "packageManager": "bun@1.3.11",
