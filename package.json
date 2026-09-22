@@ -1,0 +1,58 @@
+{
+  "name": "@trkbt10/r3",
+  "version": "0.1.0",
+  "description": "A retained-mode, Phaser-style display-list UI framework built on three.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trkbt10/r3.git"
+  },
+  "homepage": "https://github.com/trkbt10/r3#readme",
+  "bugs": {
+    "url": "https://github.com/trkbt10/r3/issues"
+  },
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./layout-engine": {
+      "types": "./dist/layout-engine/index.d.ts",
+      "import": "./dist/layout-engine/index.js",
+      "default": "./dist/layout-engine/index.js"
+    },
+    "./layout-engine/editor": {
+      "types": "./dist/layout-engine/editor/index.d.ts",
+      "import": "./dist/layout-engine/editor/index.js",
+      "default": "./dist/layout-engine/editor/index.js"
+    },
+    "./widgets/panel-effects": {
+      "types": "./dist/widgets/panel-effects/index.d.ts",
+      "import": "./dist/widgets/panel-effects/index.js",
+      "default": "./dist/widgets/panel-effects/index.js"
+    },
+    "./spotlight": {
+      "types": "./dist/spotlight/index.d.ts",
+      "import": "./dist/spotlight/index.js",
+      "default": "./dist/spotlight/index.js"
+    },
+    "./texture-canvas": {
+      "types": "./dist/texture-canvas/index.d.ts",
+      "import": "./dist/texture-canvas/index.js",
+      "default": "./dist/texture-canvas/index.js"
+    },
+    "./physics": {
+      "types": "./dist/physics/index.d.ts",
+      "import": "./dist/physics/index.js",
+      "default": "./dist/physics/index.js"
+    }
+  },
+  "sideEffects": false,
+  "peerDependencies": {
+    "three": "^0.184.0"
+  },
+  "dependencies": {}
+}
